@@ -2,39 +2,27 @@ import streamlit as st
 import pickle
 import pandas as pd
 
-# Fungsi untuk memuat file pickle
-def load_data(file_path):
-    with open(file_path, 'rb') as file:
-        data = pickle.load(file)
-    return data
+# Load the recommendation model
+@st.cache_resource
+def load_model():
+    with open("laptop_recommender.pkl", "rb") as file:
+        model = pickle.load(file)
+    return model
 
-# Judul aplikasi
-st.title("Laptop Recommender System")
+# App setup
+st.title("Sistem Rekomendasi Laptop")
 
-# Memuat file laptop_recommender.pkl
-file_path = 'laptop_recommender.pkl'  # Ganti jalur jika file berada di lokasi berbeda
-try:
-    recommender_data = load_data(file_path)
-    st.success("File berhasil dimuat!")
+# Load the model
+model = load_model()
 
-    # Jika data berupa DataFrame, tampilkan
-    if isinstance(recommender_data, pd.DataFrame):
-        st.write("### Dataframe Preview")
-        st.dataframe(recommender_data)
-    else:
-        # Tampilkan tipe data lain
-        st.write("### Data Content")
-        st.write(recommender_data)
+# User interaction
+st.sidebar.header("Input Parameter")
+user_input = st.sidebar.text_input("Masukkan spesifikasi/fitur laptop (misal: gaming, budget, ringan)")
 
-    # Contoh interaksi pengguna (sesuaikan dengan use case)
-    st.write("### Rekomendasi Laptop")
-    user_input = st.text_input("Masukkan kriteria laptop (contoh: budget, RAM, dll.):")
-    if user_input:
-        st.write(f"Rekomendasi berdasarkan input: {user_input}")
-        # Placeholder logika rekomendasi (sesuaikan dengan data Anda)
-        st.write("[Hasil rekomendasi akan ditampilkan di sini]")
-
-except FileNotFoundError:
-    st.error(f"File tidak ditemukan di lokasi: {file_path}")
-except Exception as e:
-    st.error(f"Terjadi kesalahan: {e}")
+if user_input:
+    try:
+        recommendations = model.recommend(user_input)  # Asumsikan model memiliki metode `recommend`
+        st.write("Rekomendasi Laptop untuk Anda:")
+        st.table(recommendations)  # Asumsikan hasil rekomendasi berupa DataFrame atau list
+    except Exception as e:
+        st.error(f"Terjadi kesalahan saat memproses rekomendasi: {e}")
