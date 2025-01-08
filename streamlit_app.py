@@ -1,34 +1,39 @@
-import streamlit as st
-import pandas as pd
-import pickle
+# Streamlit App untuk Laptop & Jurnal
+st.title("Sistem Rekomendasi")
+st.write("Wahyu Muhammad Arby 22.12.2553")
+st.write("Amikatuzzain 22.12.2560")
+st.write("ahcma Luhur 22.12.2577")
 
-# Load the model and dataset
-@st.cache(allow_output_mutation=True)
-def load_model_and_data():
-    with open("laptop_recommender.pkl", "rb") as f:
-        recommender = pickle.load(f)
-    data = pd.read_csv('complete laptop data0.csv', encoding='ISO-8859-1')
-    return recommender, data
+# Pilihan Sistem
+choice = st.selectbox("Pilih Sistem Rekomendasi:", ["Laptop", "Jurnal"])
 
-recommender, data = load_model_and_data()
+if choice == "Laptop":
+    st.subheader("Sistem Rekomendasi Laptop")
+    laptop_query = st.text_input("Masukkan nama laptop:")
+    num_recommendations = st.slider("Jumlah rekomendasi", min_value=1, max_value=10, value=5)
+    
+    if st.button("Cari Laptop"):
+        if laptop_query:
+            with st.spinner("Mencari rekomendasi laptop..."):
+                laptop_recommendations = recsys.recommend(laptop_query, topk=num_recommendations)
+                if isinstance(laptop_recommendations, str):
+                    st.write(laptop_recommendations)
+                else:
+                    st.write("Rekomendasi laptop untuk Anda:")
+                    st.dataframe(laptop_recommendations)
 
-# Streamlit app
-st.title("Sistem Rekomendasi Laptop")
-st.write("Masukkan nama laptop untuk mendapatkan rekomendasi berdasarkan konten.")
-
-# Input laptop name
-input_laptop = st.text_input("Nama Laptop", "")
-
-if st.button("Cari Rekomendasi"):
-    if input_laptop:
-        # Get recommendations
-        recommendations = recommender.recommend(input_laptop)
-        if isinstance(recommendations, str):
-            st.error(recommendations)  # Display error if laptop not found
-        else:
-            st.write("Hasil Rekomendasi:")
-            st.dataframe(recommendations)
-            st.write("Grafik Harga Laptop yang Direkomendasikan:")
-            st.bar_chart(data=recommendations.set_index("name")["Price"])
-    else:
-        st.warning("Masukkan nama laptop terlebih dahulu!")
+elif choice == "Jurnal":
+    st.subheader("Sistem Rekomendasi Jurnal")
+    journal_query = st.text_input("Masukkan kata atau kalimat pencarian:")
+    num_recommendations = st.slider("Jumlah rekomendasi jurnal", min_value=1, max_value=30, value=5)
+    
+    if st.button("Cari Jurnal"):
+        if journal_query:
+            with st.spinner("Mencari rekomendasi jurnal..."):
+                journal_recommendations = recommendations(journal_query, top=num_recommendations)
+                st.write("Rekomendasi jurnal untuk Anda:")
+                if isinstance(journal_recommendations, list):
+                    st.write(journal_recommendations[0])
+                else:
+                    for idx, row in journal_recommendations.iterrows():
+                        st.write(f"{idx + 1}. {row['judul']}")
