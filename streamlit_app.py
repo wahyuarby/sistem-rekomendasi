@@ -1,4 +1,3 @@
-pip install seaborn matplotlib pandas numpy scikit-learn streamlit
 import streamlit as st
 import pickle
 import seaborn as sns
