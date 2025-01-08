@@ -1,36 +1,50 @@
 import streamlit as st
 import pickle
+import seaborn as sns
+import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
 
-# Fungsi untuk memuat model
-@st.cache_resource
-def load_model():
-    try:
-        with open("laptop_recommender.pkl", "rb") as file:
-            model = pickle.load(file)
-        return model
-    except FileNotFoundError:
-        st.error("File model 'laptop_recommender.pkl' tidak ditemukan. Pastikan file tersebut ada di direktori.")
-    except pickle.UnpicklingError:
-        st.error("Terjadi kesalahan saat memuat file model. Pastikan file model kompatibel.")
+# Load model dan data
+with open('laptop_recommender.pkl', 'rb') as f:
+    recommender = pickle.load(f)
 
-# Konfigurasi aplikasi
-st.title("Sistem Rekomendasi Laptop")
+# Judul aplikasi
+st.title("💻 Sistem Rekomendasi Laptop E-commerce")
+st.markdown("""
+Aplikasi ini menggunakan metode **Collaborative Filtering dengan Cosine Similarity** 
+untuk merekomendasikan laptop berdasarkan produk yang dipilih. 
+""")
 
-# Muat model
-model = load_model()
+# Dropdown untuk memilih produk
+product_name = st.selectbox('Pilih Laptop', recommender.df['name'], index=0)
 
-# Input dari pengguna
-st.sidebar.header("Input Parameter")
-user_input = st.sidebar.text_input("Masukkan spesifikasi/fitur laptop (misal: gaming, budget, ringan)")
+# Menampilkan rekomendasi produk
+if product_name:
+    st.subheader(f"Rekomendasi untuk '{product_name}'")
+    recommended_products = recommender.recommend(product_name, topk=5)
 
-if user_input and model:
-    try:
-        # Asumsikan model memiliki metode `recommend` yang mengembalikan DataFrame atau list
-        recommendations = model.recommend(user_input)
-        st.write("Rekomendasi Laptop untuk Anda:")
-        st.table(recommendations)
-    except AttributeError:
-        st.error("Model tidak memiliki metode 'recommend'. Periksa implementasi model Anda.")
-    except Exception as e:
-        st.error(f"Terjadi kesalahan saat memproses rekomendasi: {e}")
+    # Tampilkan tabel hasil rekomendasi
+    st.write("Daftar Laptop yang Direkomendasikan:")
+    st.dataframe(recommended_products)
+
+    # Plot skor rekomendasi dalam bentuk bar chart
+    st.subheader("Skor Rekomendasi")
+    fig, ax = plt.subplots()
+    ax.barh(recommended_products['name'], np.arange(5, 0, -1), color='skyblue')
+    ax.set_xlabel('Skor')
+    ax.set_ylabel('Laptop')
+    ax.set_title('Top 5 Rekomendasi Laptop')
+    st.pyplot(fig)
+
+    # Visualisasi matriks kemiripan (Heatmap)
+    st.subheader("Matriks Kemiripan Produk")
+    similarity_matrix = cosine_similarity(recommender.bank)
+    similarity_df = pd.DataFrame(similarity_matrix, 
+                                 index=recommender.df['name'], 
+                                 columns=recommender.df['name'])
+    plt.figure(figsize=(12, 8))
+    sns.heatmap(similarity_df, cmap='coolwarm', xticklabels=False, yticklabels=False)
+    plt.title('Heatmap Matriks Kemiripan')
+    st.pyplot(plt)
